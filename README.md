@@ -1,84 +1,102 @@
 # RSS to Telegram Bot 使用文档
 
-## [English](#english-version) | [简体中文](#rss-to-telegram-bot-使用文档)
 
-#
->
-> [!TIP]
-> ***简称rss2tg，用于将自定义RSS地址，字段，刷新时间里的相关帖子即时发送到自定义TG用户或频道，省去你刷帖子的时间*** <br>
-> ***支持AMD64/ARM64*** <br>
-> ***镜像大小17M，内存占用10M*** <br>
-> **——By [drfyup](https://hstz.com)**
->
-#
+### 1. 编译 Go 程序
 
-## 1. 部署方法
-
-### 1.1 使用 Docker Compose（推荐）
-
-1. 确保已安装 Docker 和 Docker Compose（方法自寻）。
-
-2. 克隆或下载项目代码到本地。
+首先，编译为二进制文件：
 
 ```bash
-git clone https://github.com/3377/rss2tg.git
+go build -o rss2tg main.go
+```
+### 2. 创建 systemd 服务文件
+
+接下来，创建一个 systemd 服务文件来管理程序。将服务文件放在 `/etc/systemd/system/` 目录下。
+
+创建一个名为 `rss2tg.service` 的文件：
+
+```bash
+sudo nano /etc/systemd/system/rss2tg.service
 ```
 
-3. 进入项目目录。
+在文件中添加以下内容：
 
-4. 编辑 `docker-compose.yml` 文件，修改环境变量：
+```ini
+[Unit]
+Description=RSS to Telegram Bot
+After=network.target
 
--- 进入任意目录或直接当前目录，新建docker-compose.yml文件，填入以下内容
+[Service]
+ExecStart=/root/rss2tg/rss2tg
+WorkingDirectory=/root/rss2tg
+Restart=always
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=rss2tg
+User=root
+Group=root
 
-```yaml
-version: '3'
-services:
-  rss2tg:
-    container_name: rss2tg
-    image: drfyup/rss2tg:latest
-    volumes:
-      - ./config:/app/config
-      - ./data:/app/data
-    environment:
-      - TELEGRAM_BOT_TOKEN=your_bot_token_here
-      - TELEGRAM_USERS=user_id_1,user_id_2
-      - TELEGRAM_CHANNELS=@channel_1,@channel_2
-      - TZ=Asia/Shanghai
-    restart: unless-stopped
+[Install]
+WantedBy=multi-user.target
 ```
 
-将`your_bot_token_here` 替换为您的 Telegram Bot Token，`user_id_1,user_id_2` 替换为您要接收消息的用户 ID，`@channel_1,@channel_2` 替换为您要发送消息的频道名称。
+### 3. 启用并启动服务
 
-5. 运行以下命令启动容器：
+保存并关闭文件后，使用以下命令重新加载 systemd 配置，启用并启动服务：
 
-```yaml
-docker-compose up  -d
+```bash
+# 重新加载 systemd 配置
+sudo systemctl daemon-reload
+
+# 启用服务，使其在系统启动时自动启动
+sudo systemctl enable rss2tg.service
+
+# 启动服务
+sudo systemctl start rss2tg.service
 ```
 
-### 1.2 使用 Docker Run
+### 4. 检查服务状态
 
-1. 构建 Docker 镜像：
+你可以使用以下命令检查服务的状态：
 
-```yaml
-docker pull drfyup/rss2tg:latest
+```bash
+sudo systemctl status rss2tg.service
 ```
 
-2. 运行 Docker 容器：
+如果服务正常运行，你应该会看到类似以下的输出：
 
-```yaml
-docker run -d \
-  --name rss2tg \
-  -v $(pwd)/config:/app/config \
-  -v $(pwd)/data:/app/data \
-  -e TELEGRAM_BOT_TOKEN=your_bot_token_here \
-  -e TELEGRAM_USERS=user_id_1,user_id_2 \
-  -e TELEGRAM_CHANNELS=@channel_1,@channel_2 \
-  -e TZ=Asia/Shanghai \
-  --restart unless-stopped \
-  drfyup/rss2tg:latest
+```bash
+● rss2tg.service - RSS to Telegram Bot
+   Loaded: loaded (/etc/systemd/system/rss2tg.service; enabled; vendor preset: enabled)
+   Active: active (running) since Mon 2024-10-10 12:14:26 UTC; 1min ago
+ Main PID: 7686 (rss2tg)
+    Tasks: 5 (limit: 4915)
+   Memory: 10.0M
+   CGroup: /system.slice/rss2tg.service
+           └─7686  /root/rss2tg/rss2tg
 ```
 
-请替换环境变量中的相应值。
+### 5. 管理服务
+
+你可以使用以下命令来管理服务：
+
+- **停止服务**：
+
+  ```bash
+  sudo systemctl stop rss2tg.service
+  ```
+
+- **重启服务**：
+
+  ```bash
+  sudo systemctl restart rss2tg.service
+  ```
+
+- **查看服务日志**：
+
+  ```bash
+  sudo journalctl -u rss2tg.service
+  ```
 
 ## 2. 程序使用说明
 
@@ -180,225 +198,11 @@ rss:
 
 发送 `/stats` 命令给 Bot，查看今日和本周的推送数量。
 
-## 3. 注意事项
 
-- 确保 Docker 容器有足够的权限访问 `config` 和 `data` 目录。
-- 如果修改了配置文件，需要重启 Docker 容器以使更改生效。
-- 推送统计数据保存在 `/app/data/stats.yaml` 文件中。
-- 已发送的项目记录保存在 `/app/data/sent_items.txt` 文件中。
-
-## 4. 故障排查
+## 故障排查
 
 - 如果 Bot 无响应，请检查 Telegram Bot Token 是否正确。
 - 如果无法接收消息，请确保已将您的用户 ID 添加到配置中。
-- 查看 Docker 容器日志以获取更多信息：
 
-```bash
-docker logs rss2tg
-```
 
 如有其他问题，请参考项目的 GitHub 页面或提交 issue。
-
-# 贴上一张效果图<br>
-
-![image](https://github.com/user-attachments/assets/4e9ac180-5eb1-40a8-98e1-03b9fa68b691)
-
-# English Version
-# RSS to Telegram Bot usage documentation
-#
-> [!TIP]
->*** Referred to as rss2tg, it is used to instantly send related posts in custom RSS addresses, fields, and refresh times to custom TG users or channels, eliminating the time for you to swipe posts.*** <br>
->*** Support AMD64/ARM64*** <br>
->*** Image size 17M, memory footprint 10M*** <br>
->  **——By [drfyup](https://hstz.com)**
-#
-
-## 1. Deployment method
-
-### 1.1 Use Docker Compose (recommended)
-
-1. Make sure that Docker and Docker Compose are installed (the method is self-searching).
-
-2. Clone or download the project code locally.
-
-```bash
-git clone https://github.com/3377/rss2tg.git
-```
-
-3. Enter the project directory.
-
-4. Edit 'docker-compose.yml' file, modify environment variables：
-
--- Enter any directory or directly the current directory and create a new docker-compose.yml file, fill in the following content
-
-```yaml
-version: '3'
-services:
-  rss2tg:
-    container_name: rss2tg
-    image: drfyup/rss2tg:latest
-    volumes:
-      - ./config:/app/config
-      - ./data:/app/data
-    environment:
-      - TELEGRAM_BOT_TOKEN=your_bot_token_here
-      - TELEGRAM_USERS=user_id_1,user_id_2
-      - TELEGRAM_CHANNELS=@channel_1,@channel_2
-      - TZ=Asia/Shanghai
-    restart: unless-stopped
-```
-
-Replace `your_bot_token_here` with your Telegram Bot Token, `user_id_1, user_id_2` with the user ID you want to receive the message, and `@channel_1, @channel_2` with the channel name you want to send the message, `TZ=Asia/Shanghai` with your timezone settings.
-
-5. Run the following command to start the container：
-
-```yaml
-docker-compose up  -d
-```
-
-### 1.2 Use Docker Run
-
-1. Build a Docker image：
-
-```yaml
-docker pull drfyup/rss2tg:latest
-```
-
-2. Run the Docker container：
-
-```yaml
-docker run -d \
-  --name rss2tg \
-  -v $(pwd)/config:/app/config \
-  -v $(pwd)/data:/app/data \
-  -e TELEGRAM_BOT_TOKEN=your_bot_token_here \
-  -e TELEGRAM_USERS=user_id_1,user_id_2 \
-  -e TELEGRAM_CHANNELS=@channel_1,@channel_2 \
-  -e TZ=Asia/Shanghai \
-  --restart unless-stopped \
-  drfyup/rss2tg:latest
-```
-
-Please replace the corresponding value in the environment variable.
-
-## 2. Program instructions
-
-### 2.1 Configuration file
-
-The program supports configuration through YAML configuration files or environment variables.The configuration file is located in`/app/config/config.yaml`.If the file does not exist, the program will use environment variables for initial configuration.
-The reading priority of environment variables is higher than that of configuration files.
-
-Configuration file example：
-
-```yaml
-telegram:
-  bot_token: "your_bot_token_here"
-  users:
-    - "user_id_1"
-    - "user_id_2"
-  channels:
-    - "@channel_1"
-    - "@channel_2"
-#The priority of the tg configuration here is lower than that of the environment variable. If you fill in here, this configuration will not be read until one minute later.
-rss:
-  - url: "https://example.com/feed1.xml"
-    interval: 300
-    keywords:
-      - "keyword1"
-      - "keyword2"
-    group: "Group1"
-  - url: "https://example.com/feed2.xml"
-    interval: 600
-    keywords:
-      - "keyword3"
-    group: "Group2"
-```
-
-### 2.2 How to use Bot and commands
-
-The Bot supports the following commands：
-
--`/start`-Start using the robot
--`/help`-Get help information
--`/config`-View current configuration
--`/add`-add RSS subscription
--`/edit`-edit RSS feed
--`/delete`-delete RSS feed
--`/list`-list all RSS feeds
--`/statistics`-View push statistics
-
-### 2.3 Add RSS feed
-
-#### Method One
-
-1. Send the `/add' command to the Bot.
-2. Press the prompt to enter the URL of the RSS subscription.
-3. Enter the update interval (seconds).
-4. Enter keywords (separated by commas, if not, you can directly enter 1).
-5. Enter the group name.
-
-#### Method Two
-
-Create a new config in the current config directory.ymal, fill in the following.
-
-```yaml
-rss:
-- url: https://rss.nodeseek.com
-  interval: 30
-  keywords:
-  - vps
-  -Oracle
-  -Free
-  group: NS Forum
-- url: https://linux.do/latest.rss
-  interval: 30
-  keywords:
-  - vps
-  -Oracle
-  -Free
-  -Turtle shell
-  group: LC Forum
-```
-***Both methods are possible, the system will automatically detect every 1 minute, even if the dynamic changes take effect.***
-
-### 2.4 Edit RSS feed
-
-1. Send the `/edit' command to the Bot.
-2. Enter the RSS subscription number you want to edit.
-3. Follow the prompts to modify the URL, update interval, keywords, and group name.If you don't need to modify an item, enter 1 directly.
-
-### 2.5 Delete RSS feed
-
-1. Send the `/delete' command to the Bot.
-2. Enter the RSS subscription number you want to delete.
-
-### 2.6 View subscription list
-
-Send the `/list' command to the Bot to view all current RSS feeds.
-
-### 2.7 View push statistics
-
-Send the `/statistics' command to the Bot to check the number of pushes for today and this week.
-
-## 3. Precautions
-
--Make sure that the Docker container has sufficient permissions to access the 'config` and'data` directories.
--If the configuration file is modified, the Docker container needs to be restarted for the changes to take effect.
--Push statistics are saved in`/app/data/statistics.In the yaml' file.
--The sent project records are saved in`/app/data/sent_items.txt` file.
-
-## 4. Troubleshooting
-
--If the Bot is unresponsive, please check whether the Telegram Bot token is correct.
--If the message cannot be received, please make sure that your user ID has been added to the configuration.
--View the Docker container log for more information：
-
-```bash
-docker logs rss2tg
-```
-
-If you have other questions, please refer to the project's GitHub page or submit an issue.
-
-# Paste a rendering <br>
-
-![image](https://github.com/user-attachments/assets/4e9ac180-5eb1-40a8-98e1-03b9fa68b691)
