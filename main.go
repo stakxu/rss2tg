@@ -20,7 +20,7 @@ type App struct {
 }
 
 func NewApp(cfg *config.Config, db *storage.Storage, stats *stats.Stats) (*App, error) {
-    bot, err := bot.NewBot(cfg.Telegram.BotToken, cfg.Telegram.Users, cfg.Telegram.Channels, db, cfg, "/app/config/config.yaml", stats)
+    bot, err := bot.NewBot(cfg.Telegram.BotToken, cfg.Telegram.Users, cfg.Telegram.Channels, db, cfg, "config/config.yaml", stats)
     if err != nil {
         return nil, err
     }
@@ -82,7 +82,7 @@ func (app *App) watchConfig() {
     for {
         select {
         case <-ticker.C:
-            newCfg, err := config.Load("/app/config/config.yaml")
+            newCfg, err := config.Load("config/config.yaml")
             if err != nil {
                 log.Printf("加载配置失败: %v", err)
                 continue
@@ -113,7 +113,7 @@ func main() {
     // 如果环境变量中没有足够的配置信息，则尝试从配置文件加载
     if cfg.Telegram.BotToken == "" || len(cfg.Telegram.Users) == 0 {
         log.Println("环境变量中配置不完整，尝试从配置文件加载")
-        cfg, err = config.Load("/app/config/config.yaml")
+        cfg, err = config.Load("config/config.yaml")
         if err != nil {
             log.Fatalf("加载配置失败: %v", err)
         }
@@ -122,8 +122,8 @@ func main() {
     // 打印加载的配置（注意不要打印敏感信息如 bot token）
     log.Printf("加载的配置: Users: %v, Channels: %v", cfg.Telegram.Users, cfg.Telegram.Channels)
 
-    db := storage.NewStorage("/app/data/sent_items.txt")
-    stats, err := stats.NewStats("/app/data/stats.yaml")
+    db := storage.NewStorage("data/sent_items.txt")
+    stats, err := stats.NewStats("data/stats.yaml")
     if err != nil {
         log.Fatalf("创建统计失败: %v", err)
     }
