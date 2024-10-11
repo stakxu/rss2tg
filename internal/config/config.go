@@ -17,11 +17,13 @@ type TelegramConfig struct {
 }
 
 type RSSConfig struct {
-    URL      string   `yaml:"url"`
-    Interval int      `yaml:"interval"`
-    Keywords []string `yaml:"keywords"`
-    Group    string   `yaml:"group"`
+    URL             string   `yaml:"url"`
+    Interval        int      `yaml:"interval"`
+    Keywords        []string `yaml:"keywords"`
+    ExcludeKeywords []string `yaml:"exclude_keywords"` // 新增字段
+    Group           string   `yaml:"group"`
 }
+
 
 type Config struct {
     Telegram TelegramConfig `yaml:"telegram"`
@@ -54,6 +56,7 @@ func LoadFromEnv() *Config {
         RSS: []RSSConfig{}, // RSS 配置仍然从配置文件加载
     }
 }
+
 
 func (c *Config) Save(filename string) error {
     data, err := yaml.Marshal(c)
