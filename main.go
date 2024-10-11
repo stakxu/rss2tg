@@ -92,11 +92,12 @@ func (app *App) watchConfig() {
                 log.Println("检测到配置变更，正在更新...")
                 app.config = newCfg
                 app.bot.UpdateConfig(newCfg)
-                app.updateRSS()
+                app.updateRSS() // 这里会重新加载 RSS 配置，包括 exclude_keywords
             }
         }
     }
 }
+
 
 func main() {
     log.SetFlags(log.LstdFlags | log.Lshortfile)
