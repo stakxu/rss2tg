@@ -235,13 +235,11 @@ func (b *Bot) handleUserInput(message *tgbotapi.Message) {
     switch b.userState[userID] {
     case "add_url":
         b.userState[userID] = "add_interval"
-        b.config.RSS = append(b.config.RSS, struct {
-            URL      string   `yaml:"url"`
-            Interval int      `yaml:"interval"`
-            Keywords []string `yaml:"keywords"`
-            Group    string   `yaml:"group"`
-        }{URL: text})
+        b.config.RSS = append(b.config.RSS, config.RSSConfig{  // 使用 config.RSSConfig
+            URL: text,
+        })
         b.sendMessage(chatID, "请输入订阅的更新间隔（秒）：")
+
     case "add_interval":
         interval, err := strconv.Atoi(text)
         if err != nil {
