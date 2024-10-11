@@ -1,20 +1,29 @@
 telegram:
-  bot_token: ""
+  bot_token: bot_token
   users:
-    - "填入你的tg id"
+  - "tg_id"
   channels:
-    - ""
-  ##以下为示例，可随意更改。
+  - ""
 rss:
-  - url: https://rss.nodeseek.com
-    interval: 30
-    keywords:
-      - 便宜
-      - 手机
-    group: NS论坛
-  - url: https://linux.do/latest.rss
-    interval: 30
-    keywords:
-      - api
-      - 免费
-    group: DO论坛
+- url: https://rss.nodeseek.com
+  interval: 30
+  keywords:
+  - 优惠
+  - 开源
+  - 面板
+  - 小红卡
+  exclude_keywords:  # 新增不推送关键词
+  - "哪吒面板"  
+  - "测评"  
+  group: NS论坛
+- url: https://hostloc.com/forum.php?mod=rss&fid=45&auth=389ec3vtQanmEuRoghE%2FpZPWnYCPmvwWgSa7RsfjbQ%2BJpA%2F6y6eHAx%2FKqtmPOg
+  interval: 30
+  keywords:
+  - api
+  - 活动
+  - 开源
+  - 面板
+  exclude_keywords:
+  - "哪吒面板" 
+  - "测评"  
+  group: Loc论坛
