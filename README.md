@@ -121,8 +121,14 @@ rss:
   - url: "https://example.com/feed1.xml"
     interval: 300
     keywords:
-      - "keyword1"
+      - "面板"
       - "keyword2"
+
+    exclude_keywords:  # 新增不推送关键词
+    - "哪吒面板"  
+    - "测评"  
+
+
     group: "Group1"
   - url: "https://example.com/feed2.xml"
     interval: 600
